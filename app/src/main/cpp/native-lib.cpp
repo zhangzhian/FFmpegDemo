@@ -65,6 +65,14 @@ void custom_log(void *ptr, int level, const char *fmt, va_list vl) {
 	}
 }
 
+/**
+ * 单个RGB->BMP
+ * @param rgb24path
+ * @param width
+ * @param height
+ * @param bmppath
+ * @return
+ */
 int simplest_rgb24_to_bmp(const char *rgb24path, int width, int height, const char *bmppath) {
 	typedef struct {
 		long imageSize;
@@ -141,7 +149,16 @@ int simplest_rgb24_to_bmp(const char *rgb24path, int width, int height, const ch
 }
 
 
-//保存BMP文件的函数
+/**
+ * RGB帧->BMP
+ * 保存BMP文件的函数
+ * @param pFrameRGB
+ * @param width
+ * @param height
+ * @param index
+ * @return
+ */
+
 int SaveAsBMP(AVFrame *pFrameRGB, int width, int height, int index) {
 	typedef struct {
 		long imageSize;
@@ -163,7 +180,8 @@ int SaveAsBMP(AVFrame *pFrameRGB, int width, int height, int index) {
 		long colorImportant;
 	} InfoHead;
 	char *filename = new char[255];  //文件存放路径，根据自己的修改
-	sprintf(filename, "%s_%d.bmp", "/storage/emulated/0/Download/", index);
+
+	sprintf(filename, "%s_%d.bmp", "/storage/emulated/0/Download/avtest/img/", index);
 
 	BmpHead m_BMPHeader = {0};
 	InfoHead m_BMPInfoHeader = {0};
@@ -171,13 +189,10 @@ int SaveAsBMP(AVFrame *pFrameRGB, int width, int height, int index) {
 	int header_size = sizeof(bfType) + sizeof(BmpHead) + sizeof(InfoHead);
 	unsigned char *rgb24_buffer = NULL;
 	FILE *fp_bmp = NULL;
-	int i = 0, j = 0;
 	if ((fp_bmp = fopen(filename, "wb")) == NULL) {
 		printf("Error: Cannot open output BMP file.\n");
 		return -1;
 	}
-
-
 	m_BMPHeader.imageSize = 3 * width * height + header_size;
 	m_BMPHeader.startPosition = header_size;
 
@@ -193,28 +208,9 @@ int SaveAsBMP(AVFrame *pFrameRGB, int width, int height, int index) {
 	fwrite(&m_BMPHeader, 1, sizeof(m_BMPHeader), fp_bmp);
 	fwrite(&m_BMPInfoHeader, 1, sizeof(m_BMPInfoHeader), fp_bmp);
 
-
 	rgb24_buffer = (unsigned char *) malloc(width * height * 3);
-//	FILE *fp_tmp = NULL;
-//
-//	if ((fp_tmp = fopen("temp", "wb")) == NULL) {
-//		printf("Error: Cannot open output BMP file.\n");
-//		return -1;
-//	}
-//	fwrite(pFrameRGB->data[0], width * height * 24 / 8, 1, fp_tmp);
-//	fread(rgb24_buffer, 1, width * height * 3, fp_tmp);
-//	for(j =0;j<height;j++){
-//		for(i=0;i<width;i++){
-//			char temp=rgb24_buffer[(j*width+i)*3+2];
-//			rgb24_buffer[(j*width+i)*3+2]=rgb24_buffer[(j*width+i)*3+0];
-//			rgb24_buffer[(j*width+i)*3+0]=temp;
-//		}
-//	}
 
 	fwrite(pFrameRGB->data[0], width * height * 24 / 8, 1, fp_bmp);
-	//BMP save R1|G1|B1,R2|G2|B2 as B1|G1|R1,B2|G2|R2
-	//It saves pixel data in Little Endian
-	//So we change 'R' and 'B'
 
 	fclose(fp_bmp);
 	free(rgb24_buffer);
@@ -222,31 +218,20 @@ int SaveAsBMP(AVFrame *pFrameRGB, int width, int height, int index) {
 
 }
 
-
-extern "C"
-JNIEXPORT jint JNICALL
-Java_com_yodosmart_ffmpegdemo_MainActivity_RGBToBitmap(JNIEnv *env, jobject instance) {
-
-	return simplest_rgb24_to_bmp("/storage/emulated/0/out.rgb", 640, 360,
-								 "/storage/emulated/0/out.bmp");
-
-}
-
 /***
- * h264转换成Bitmap
- * H.264->YUV420->RGB->BMP
+ * vai/mp4/h264转换成Bitmap
+ * vai/mp4/h264->RGB->BMP
  */
 extern "C"
 JNIEXPORT jint JNICALL
-Java_com_yodosmart_ffmpegdemo_MainActivity_h264ToBitmap(JNIEnv *env, jobject obj,
-														jstring input_jstr, jstring output_jstr) {
-
+Java_com_yodosmart_ffmpegdemo_MainActivity_avToBitmap(JNIEnv *env, jobject instance,
+													  jstring input_jstr, jstring output_jstr) {
 	//h264ToYue
 	AVFormatContext *pFormatCtx;
 	int i, videoindex;
 	AVCodecContext *pCodecCtx;
 	AVCodec *pCodec;
-	AVFrame *pFrame, *pFrameYUV;
+	AVFrame *pFrame, *pFrameRGB;
 	uint8_t *out_buffer;
 	AVPacket *packet;
 	int y_size;
@@ -261,13 +246,9 @@ Java_com_yodosmart_ffmpegdemo_MainActivity_h264ToBitmap(JNIEnv *env, jobject obj
 	char input_str[500] = {0};
 	char output_str[500] = {0};
 	char info[1000] = {0};
-
-	int num = 0;
-	FILE *output = fopen("/storage/emulated/0/out.rgb", "wb+");
-
 	sprintf(input_str, "%s", env->GetStringUTFChars(input_jstr, NULL));
 	sprintf(output_str, "%s", env->GetStringUTFChars(output_jstr, NULL));
-
+	FILE *output = fopen(output_str, "wb+");
 	//FFmpeg av_log() callback
 	av_log_set_callback(custom_log);
 
@@ -305,25 +286,22 @@ Java_com_yodosmart_ffmpegdemo_MainActivity_h264ToBitmap(JNIEnv *env, jobject obj
 	}
 
 	pFrame = av_frame_alloc();
-	pFrameYUV = av_frame_alloc();
-//	out_buffer = (unsigned char *) av_malloc(
-//			av_image_get_buffer_size(AV_PIX_FMT_YUV420P, pCodecCtx->width, pCodecCtx->height, 1));
-//	av_image_fill_arrays(pFrameYUV->data, pFrameYUV->linesize, out_buffer,
-//						 AV_PIX_FMT_YUV420P, pCodecCtx->width, pCodecCtx->height, 1);
+	pFrameRGB = av_frame_alloc();
+	//	out_buffer = (unsigned char *) av_malloc(
+	//			av_image_get_buffer_size(AV_PIX_FMT_YUV420P, pCodecCtx->width, pCodecCtx->height, 1));
+	//	av_image_fill_arrays(pFrameRGB->data, pFrameRGB->linesize, out_buffer,
+	//		 AV_PIX_FMT_YUV420P, pCodecCtx->width, pCodecCtx->height, 1);
 	out_buffer = (unsigned char *) av_malloc(
 			av_image_get_buffer_size(AV_PIX_FMT_BGR24, pCodecCtx->width, pCodecCtx->height, 1));
-	av_image_fill_arrays(pFrameYUV->data, pFrameYUV->linesize, out_buffer,
+	av_image_fill_arrays(pFrameRGB->data, pFrameRGB->linesize, out_buffer,
 						 AV_PIX_FMT_BGR24, pCodecCtx->width, pCodecCtx->height, 1);
-//	out_buffer=new uint8_t[avpicture_get_size(AV_PIX_FMT_RGB24, pCodecCtx->width, pCodecCtx->height)];
-//	avpicture_fill((AVPicture *)pFrameYUV, out_buffer, AV_PIX_FMT_RGB24, pCodecCtx->width, pCodecCtx->height);
 
 
 	packet = (AVPacket *) av_malloc(sizeof(AVPacket));
 
-//	img_convert_ctx = sws_getContext(pCodecCtx->width, pCodecCtx->height, pCodecCtx->pix_fmt,
-//									 pCodecCtx->width, pCodecCtx->height, AV_PIX_FMT_YUV420P,
-//									 SWS_BICUBIC, NULL, NULL, NULL);
-
+	//	img_convert_ctx = sws_getContext(pCodecCtx->width, pCodecCtx->height, pCodecCtx->pix_fmt,
+	//	 pCodecCtx->width, pCodecCtx->height, AV_PIX_FMT_YUV420P,
+	//	 SWS_BICUBIC, NULL, NULL, NULL);
 	img_convert_ctx = sws_getContext(pCodecCtx->width, pCodecCtx->height, pCodecCtx->pix_fmt,
 									 pCodecCtx->width, pCodecCtx->height, AV_PIX_FMT_BGR24,
 									 SWS_BICUBIC, NULL, NULL, NULL);
@@ -354,22 +332,16 @@ Java_com_yodosmart_ffmpegdemo_MainActivity_h264ToBitmap(JNIEnv *env, jobject obj
 			if (got_picture) {
 				sws_scale(img_convert_ctx, (const uint8_t *const *) pFrame->data, pFrame->linesize,
 						  0, pCodecCtx->height,
-						  pFrameYUV->data, pFrameYUV->linesize);
-
-
+						  pFrameRGB->data, pFrameRGB->linesize);
 				y_size = pCodecCtx->width * pCodecCtx->height;
 
 				//RGB
 				//转换
-				fwrite(pFrameYUV->data[0], (pCodecCtx->width) * (pCodecCtx->height) * 3, 1, output);
-				//void SaveAsBMP(AVFrame *pFrameRGB, int width, int height, int index, int bpp)
-
-
-
-				SaveAsBMP(pFrameYUV, pCodecCtx->width, pCodecCtx->height, frame_cnt);
-//				fwrite(pFrameYUV->data[0], 1, y_size, fp_yuv);    //Y
-//				fwrite(pFrameYUV->data[1], 1, y_size / 4, fp_yuv);  //U
-//				fwrite(pFrameYUV->data[2], 1, y_size / 4, fp_yuv);  //V
+				fwrite(pFrameRGB->data[0], (pCodecCtx->width) * (pCodecCtx->height) * 3, 1, output);
+				SaveAsBMP(pFrameRGB, pCodecCtx->width, pCodecCtx->height, frame_cnt);
+				//fwrite(pFrameRGB->data[0], 1, y_size, fp_yuv);    //Y
+				//fwrite(pFrameRGB->data[1], 1, y_size / 4, fp_yuv);  //U
+				//fwrite(pFrameRGB->data[2], 1, y_size / 4, fp_yuv);  //V
 				//Output info
 				char pictype_str[10] = {0};
 				switch (pFrame->pict_type) {
@@ -401,26 +373,24 @@ Java_com_yodosmart_ffmpegdemo_MainActivity_h264ToBitmap(JNIEnv *env, jobject obj
 			break;
 		if (!got_picture)
 			break;
-//		sws_scale(img_convert_ctx, (const uint8_t *const *) pFrame->data, pFrame->linesize, 0,
-//				  pCodecCtx->height,
-//				  pFrameYUV->data, pFrameYUV->linesize);
-//		int y_size = pCodecCtx->width * pCodecCtx->height;
+		//	sws_scale(img_convert_ctx, (const uint8_t *const *) pFrame->data, pFrame->linesize, 0,
+		//  pCodecCtx->height,
+		//  pFrameRGB->data, pFrameRGB->linesize);
+		//	int y_size = pCodecCtx->width * pCodecCtx->height;
 
 		sws_scale(img_convert_ctx, (const uint8_t *const *) pFrame->data, pFrame->linesize, 0,
 				  pCodecCtx->height,
-				  pFrameYUV->data, pFrameYUV->linesize);
+				  pFrameRGB->data, pFrameRGB->linesize);
 		int y_size = pCodecCtx->width * pCodecCtx->height;
 		//RGB
 		//转换
-		fwrite(pFrameYUV->data[0], (pCodecCtx->width) * (pCodecCtx->height) * 3, 1, output);
+		fwrite(pFrameRGB->data[0], (pCodecCtx->width) * (pCodecCtx->height) * 3, 1, output);
 
 
-
-
-		SaveAsBMP(pFrameYUV, pCodecCtx->width, pCodecCtx->height, frame_cnt);
-//		fwrite(pFrameYUV->data[0], 1, y_size, fp_yuv);    //Y
-//		fwrite(pFrameYUV->data[1], 1, y_size / 4, fp_yuv);  //U
-//		fwrite(pFrameYUV->data[2], 1, y_size / 4, fp_yuv);  //V
+		SaveAsBMP(pFrameRGB, pCodecCtx->width, pCodecCtx->height, frame_cnt);
+		//		fwrite(pFrameRGB->data[0], 1, y_size, fp_yuv);    //Y
+		//		fwrite(pFrameRGB->data[1], 1, y_size / 4, fp_yuv);  //U
+		//		fwrite(pFrameRGB->data[2], 1, y_size / 4, fp_yuv);  //V
 		//Output info
 		char pictype_str[10] = {0};
 		switch (pFrame->pict_type) {
@@ -450,14 +420,24 @@ Java_com_yodosmart_ffmpegdemo_MainActivity_h264ToBitmap(JNIEnv *env, jobject obj
 
 	fclose(fp_yuv);
 
-	av_frame_free(&pFrameYUV);
+	av_frame_free(&pFrameRGB);
 	av_frame_free(&pFrame);
 	avcodec_close(pCodecCtx);
 	avformat_close_input(&pFormatCtx);
 	//simplest_rgb24_to_bmp("lena_256x256_rgb24.rgb", 256, 256, "output_lena.bmp");
-	return 0;
-//	return env->NewStringUTF(returnValue);
+	return frame_cnt;
 }
+
+extern "C"
+JNIEXPORT jint JNICALL
+Java_com_yodosmart_ffmpegdemo_MainActivity_RGBToBitmap(JNIEnv *env, jobject instance) {
+
+	return simplest_rgb24_to_bmp("/storage/emulated/0/out.rgb", 640, 360,
+								 "/storage/emulated/0/out.bmp");
+
+}
+
+
 
 extern "C"
 JNIEXPORT jstring JNICALL
