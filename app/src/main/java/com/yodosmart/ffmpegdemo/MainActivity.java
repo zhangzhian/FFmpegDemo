@@ -11,16 +11,11 @@ import android.provider.MediaStore;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.StaggeredGridLayoutManager;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
-import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.bumptech.glide.Glide;
-
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -60,7 +55,7 @@ public class MainActivity extends AppCompatActivity {
 
     private List<String> dataImage = new ArrayList<>();
     private ImageAdapter adapterImage;
-    private int mp4, avi, h264;
+    private int picNum;
     Handler handler = new Handler(new Handler.Callback() {
         @Override
         public boolean handleMessage(Message message) {
@@ -68,20 +63,19 @@ public class MainActivity extends AppCompatActivity {
                 dealResult();
             } else if (message.what == 1) {
                 Toast.makeText(MainActivity.this, "Error", Toast.LENGTH_SHORT).show();
+                dialog.dismiss();
             }
             return false;
         }
     });
 
     private void dealResult() {
-        for (int i = 0; i < mp4; i++) {
+        for (int i = 0; i < picNum; i++) {
             dataImage.add("/storage/emulated/0/Download/avtest/img/_" + i + ".bmp");
         }
         adapterImage.notifyDataSetChanged();
         dialog.dismiss();
-
     }
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -95,25 +89,6 @@ public class MainActivity extends AppCompatActivity {
         rv.setAdapter(adapterImage);
     }
 
-    /**
-     * A native method that is implemented by the 'native-lib' native library,
-     * which is packaged with this application.
-     */
-    public native String stringFromJNI();
-
-
-    public native String urlprotocolinfo();
-
-    public native String avformatinfo();
-
-    public native String avcodecinfo();
-
-    public native String avfilterinfo();
-
-    public native int avToBitmap(String input_jstr, String output_jstr);
-
-    public native int RGBToBitmap();
-
 
     @OnClick({R.id.bt_mp4, R.id.bt1, R.id.bt_avi, R.id.bt2, R.id.bt_h264, R.id.bt3})
     public void onViewClicked(View view) {
@@ -122,39 +97,43 @@ public class MainActivity extends AppCompatActivity {
                 openSystemFile(1);
                 break;
             case R.id.bt1:
-                dialog.showDialog();
-                String[] videoInfo = tvRoute1.getText().toString().split("/");
-                String fileName = videoInfo[videoInfo.length - 1];
-                String filePath = tvRoute1.getText().toString().replace(fileName, "");
-                final String[] fileNames = fileName.split("\\.");
-                new Thread(new Runnable() {
-                    public void run() {
-                        mp4 = avToBitmap(tvRoute1.getText().toString(), "/storage/emulated/0/Download/avtest/" + fileNames[0] + ".rgb");
-                        if (mp4 >= 0) {
-                            handler.sendEmptyMessage(0);
-                        } else {
-                            handler.sendEmptyMessage(1);
-                        }
-
-                    }
-                }).start();
-
-
+                ensure(tvRoute1);
                 break;
             case R.id.bt_avi:
-
                 openSystemFile(2);
                 break;
             case R.id.bt2:
+                ensure(tvRoute2);
                 break;
             case R.id.bt_h264:
-
                 openSystemFile(3);
                 break;
             case R.id.bt3:
-
+                ensure(tvRoute3);
                 break;
         }
+    }
+
+    /**
+     * 确认按钮，开始转码
+     */
+    private void ensure(final TextView tvRoute) {
+        dialog.showDialog();
+        String[] videoInfo = tvRoute.getText().toString().split("/");
+        String fileName = videoInfo[videoInfo.length - 1];
+        String filePath = tvRoute.getText().toString().replace(fileName, "");
+        final String[] fileNames = fileName.split("\\.");
+        new Thread(new Runnable() {
+            public void run() {
+                picNum = avToBitmap(tvRoute.getText().toString(), "/storage/emulated/0/Download/avtest/" + fileNames[0] + ".rgb");
+                //转码成功
+                if (picNum >= 0) {
+                    handler.sendEmptyMessage(0);
+                } else {
+                    handler.sendEmptyMessage(1);
+                }
+            }
+        }).start();
     }
 
 
@@ -197,4 +176,24 @@ public class MainActivity extends AppCompatActivity {
         }
 
     }
+
+    /**
+     * A native method that is implemented by the 'native-lib' native library,
+     * which is packaged with this application.
+     */
+    public native String stringFromJNI();
+
+
+    public native String urlprotocolinfo();
+
+    public native String avformatinfo();
+
+    public native String avcodecinfo();
+
+    public native String avfilterinfo();
+
+    public native int avToBitmap(String input_jstr, String output_jstr);
+
+    public native int RGBToBitmap();
+
 }
