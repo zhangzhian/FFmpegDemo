@@ -211,7 +211,6 @@ int SaveAsBMP(AVFrame *pFrameRGB, int width, int height, int index) {
 	rgb24_buffer = (unsigned char *) malloc(width * height * 3);
 
 	fwrite(pFrameRGB->data[0], width * height * 24 / 8, 1, fp_bmp);
-
 	fclose(fp_bmp);
 	free(rgb24_buffer);
 	return 0;
