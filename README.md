@@ -1,5 +1,4 @@
 # FFmpegDemo
-[TOD]
 #### 在Android Studio中使用cmake编译FFmpeg
 http://blog.csdn.net/baidu_32237719/article/details/77675784
 
