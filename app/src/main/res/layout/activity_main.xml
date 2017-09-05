@@ -8,7 +8,6 @@
     android:orientation="vertical"
     tools:context="com.yodosmart.ffmpegdemo.MainActivity">
 
-
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -30,14 +29,14 @@
             android:id="@+id/bt_mp4"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="查找mp4"
+            android:text="选择mp4"
             />
 
         <Button
             android:id="@+id/bt1"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="确定"
+            android:text="解析图片"
             />
     </LinearLayout>
 
@@ -62,14 +61,14 @@
             android:id="@+id/bt_avi"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="查找avi"
+            android:text="选择avi"
             />
 
         <Button
             android:id="@+id/bt2"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="确定"
+            android:text="解析图片"
             />
     </LinearLayout>
 
@@ -94,14 +93,78 @@
             android:id="@+id/bt_h264"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="查找h264"
+            android:text="选择h264"
             />
 
         <Button
             android:id="@+id/bt3"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="确定"
+            android:text="解析图片"
+            />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        >
+
+        <TextView
+            android:id="@+id/tv_route_4"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:gravity="center_vertical"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toTopOf="parent"/>
+
+        <Button
+            android:id="@+id/bt_camera"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Camera"
+            />
+
+        <Button
+            android:id="@+id/bt4"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="解析图片"
+            />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        >
+
+        <TextView
+            android:id="@+id/tv_route_5"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:gravity="center_vertical"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toTopOf="parent"/>
+
+        <Button
+            android:id="@+id/bt_yuv"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="选择YUV"
+            />
+
+        <Button
+            android:id="@+id/bt5"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="压缩"
             />
     </LinearLayout>
 
