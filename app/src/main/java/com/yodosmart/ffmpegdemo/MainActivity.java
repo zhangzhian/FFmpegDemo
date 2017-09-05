@@ -88,6 +88,9 @@ public class MainActivity extends AppCompatActivity {
         }
     });
 
+    /**
+     * 刷新RV，展示解析的数据
+     */
     private void dealResult() {
         for (int i = 0; i < picNum; i++) {
             dataImage.add("/storage/emulated/0/Download/avtest/img/_" + i + ".bmp");
@@ -117,28 +120,28 @@ public class MainActivity extends AppCompatActivity {
                 break;
             case R.id.bt1:
                 if (!TextUtils.isEmpty(tvRoute1.getText().toString()))
-                    ensure(tvRoute1);
+                    conversion(tvRoute1);
                 break;
             case R.id.bt_avi:
                 openSystemFile(2);
                 break;
             case R.id.bt2:
                 if (!TextUtils.isEmpty(tvRoute2.getText().toString()))
-                    ensure(tvRoute2);
+                    conversion(tvRoute2);
                 break;
             case R.id.bt_h264:
                 openSystemFile(3);
                 break;
             case R.id.bt3:
                 if (!TextUtils.isEmpty(tvRoute3.getText().toString()))
-                    ensure(tvRoute3);
+                    conversion(tvRoute3);
                 break;
             case R.id.bt_camera:
                 camera(4);
                 break;
             case R.id.bt4:
                 if (!TextUtils.isEmpty(tvRoute4.getText().toString()))
-                    ensure(tvRoute4);
+                    conversion(tvRoute4);
                 break;
             case R.id.bt_yuv:
                 openSystemFile(5);
@@ -150,6 +153,11 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * 调用系统摄像机
+     *
+     * @param i
+     */
     private void camera(int i) {
         videoPath = Environment.getExternalStorageDirectory().getPath() + "/Download/video.mp4";
         Uri fileUri = Uri.fromFile(new File(videoPath));
@@ -187,7 +195,7 @@ public class MainActivity extends AppCompatActivity {
     /**
      * 确认按钮，开始转码
      */
-    private void ensure(final TextView tvRoute) {
+    private void conversion(final TextView tvRoute) {
         dialog.showDialog();
         String[] videoInfo = tvRoute.getText().toString().split("/");
         String fileName = videoInfo[videoInfo.length - 1];
@@ -206,7 +214,11 @@ public class MainActivity extends AppCompatActivity {
         }).start();
     }
 
-
+    /**
+     * 调用系统文件管理器
+     *
+     * @param type
+     */
     public void openSystemFile(int type) {
         Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
         //系统调用Action属性
@@ -269,9 +281,28 @@ public class MainActivity extends AppCompatActivity {
 
     public native String avfilterinfo();
 
+    /**
+     * avi/mp4/h264转换成Bitmap
+     *
+     * @param input_jstr  输入的avi/mp4/h264路径
+     * @param output_jstr 输出的rgb路径
+     * @return 大于等于0解析正确，返回的是解析生成bmp的数量
+     * 小与0解析出现问题
+     */
     public native int avToBitmap(String input_jstr, String output_jstr);
 
     public native int RGBToBitmap();
+
+    /**
+     * yuv转换成mp4
+     *
+     * @param input_jstr  输入的路径
+     * @param output_jstr 输出路径
+     * @param w_jstr      宽
+     * @param h_jstr      高
+     * @param num_jstr    帧数量
+     * @return
+     */
 
     public native int yuvToMp4(String input_jstr, String output_jstr, int w_jstr, int h_jstr, int num_jstr);
 
