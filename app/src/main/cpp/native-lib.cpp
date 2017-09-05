@@ -430,6 +430,7 @@ Java_com_yodosmart_ffmpegdemo_MainActivity_avToBitmap(JNIEnv *env, jobject insta
 using namespace std;
 
 int flush_encoder(AVFormatContext *fmt_ctx, unsigned int stream_index);
+
 /***
  * yuv转换成mp4
  */
