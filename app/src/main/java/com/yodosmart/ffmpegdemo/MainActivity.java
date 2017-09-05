@@ -155,8 +155,6 @@ public class MainActivity extends AppCompatActivity {
 
     /**
      * 调用系统摄像机
-     *
-     * @param i
      */
     private void camera(int i) {
         videoPath = Environment.getExternalStorageDirectory().getPath() + "/Download/video.mp4";
