@@ -11,6 +11,7 @@ extern "C"
 #include <libavutil/imgutils.h>
 #include <libswscale/swscale.h>
 #include <android/log.h>
+#include <libavutil/opt.h>
 #include <libavutil/log.h>
 #include <jni.h>
 }
@@ -73,6 +74,7 @@ void custom_log(void *ptr, int level, const char *fmt, va_list vl) {
  * @param bmppath
  * @return
  */
+
 int simplest_rgb24_to_bmp(const char *rgb24path, int width, int height, const char *bmppath) {
 	typedef struct {
 		long imageSize;
@@ -140,11 +142,84 @@ int simplest_rgb24_to_bmp(const char *rgb24path, int width, int height, const ch
 	}
 	fwrite(rgb24_buffer, 3 * width * height, 1, fp_bmp);
 
-
 	fclose(fp_rgb24);
 	fclose(fp_bmp);
 	free(rgb24_buffer);
 	printf("Finish generate %s!\n", bmppath);
+	return 0;
+}
+
+
+int SaveAsBMP(uint8_t *rgb24_buffer, int width, int height, int index) {
+	typedef struct {
+		long imageSize;
+		long blank;
+		long startPosition;
+	} BmpHead;
+
+	typedef struct {
+		long Length;
+		long width;
+		long height;
+		unsigned short colorPlane;
+		unsigned short bitColor;
+		long zipFormat;
+		long realSize;
+		long xPels;
+		long yPels;
+		long colorUse;
+		long colorImportant;
+	} InfoHead;
+
+	int i = 0, j = 0;
+	BmpHead m_BMPHeader = {0};
+	InfoHead m_BMPInfoHeader = {0};
+	char bfType[2] = {'B', 'M'};
+	int header_size = sizeof(bfType) + sizeof(BmpHead) + sizeof(InfoHead);
+//	unsigned char *rgb24_buffer = NULL;
+	FILE *fp_bmp = NULL;
+
+	char *filename = new char[255];  //文件存放路径，根据自己的修改
+	sprintf(filename, "%s_%d.bmp", "/storage/emulated/0/Download/avtest/img/", index);
+
+//	if ((fp_rgb24 = fopen(rgb24path, "rb")) == NULL) {
+//		printf("Error: Cannot open input RGB24 file.\n");
+//		return -1;
+//	}
+	if ((fp_bmp = fopen(filename, "wb")) == NULL) {
+		printf("Error: Cannot open output BMP file.\n");
+		return -1;
+	}
+
+//	rgb24_buffer = (unsigned char *) malloc(width * height * 3);
+//	fread(rgb24_buffer, 1, width * height * 3, str);
+	m_BMPHeader.imageSize = 3 * width * height + header_size;
+	m_BMPHeader.startPosition = header_size;
+
+	m_BMPInfoHeader.Length = sizeof(InfoHead);
+	m_BMPInfoHeader.width = width;
+	//BMP storage pixel data in opposite direction of Y-axis (from bottom to top).
+	m_BMPInfoHeader.height = -height;
+	m_BMPInfoHeader.colorPlane = 1;
+	m_BMPInfoHeader.bitColor = 24;
+	m_BMPInfoHeader.realSize = 3 * width * height;
+
+	fwrite(bfType, 1, sizeof(bfType), fp_bmp);
+	fwrite(&m_BMPHeader, 1, sizeof(m_BMPHeader), fp_bmp);
+	fwrite(&m_BMPInfoHeader, 1, sizeof(m_BMPInfoHeader), fp_bmp);
+	//BMP save R1|G1|B1,R2|G2|B2 as B1|G1|R1,B2|G2|R2
+	//It saves pixel data in Little Endian
+	//So we change 'R' and 'B'
+	for (j = 0; j < height; j++) {
+		for (i = 0; i < width; i++) {
+			char temp = rgb24_buffer[(j * width + i) * 3 + 2];
+			rgb24_buffer[(j * width + i) * 3 + 2] = rgb24_buffer[(j * width + i) * 3 + 0];
+			rgb24_buffer[(j * width + i) * 3 + 0] = temp;
+		}
+	}
+
+	fwrite(rgb24_buffer, 3 * width * height, 1, fp_bmp);
+	fclose(fp_bmp);
 	return 0;
 }
 
@@ -187,7 +262,6 @@ int SaveAsBMP(AVFrame *pFrameRGB, int width, int height, int index) {
 	InfoHead m_BMPInfoHeader = {0};
 	char bfType[2] = {'B', 'M'};
 	int header_size = sizeof(bfType) + sizeof(BmpHead) + sizeof(InfoHead);
-	unsigned char *rgb24_buffer = NULL;
 	FILE *fp_bmp = NULL;
 	if ((fp_bmp = fopen(filename, "wb")) == NULL) {
 		printf("Error: Cannot open output BMP file.\n");
@@ -208,15 +282,12 @@ int SaveAsBMP(AVFrame *pFrameRGB, int width, int height, int index) {
 	fwrite(&m_BMPHeader, 1, sizeof(m_BMPHeader), fp_bmp);
 	fwrite(&m_BMPInfoHeader, 1, sizeof(m_BMPInfoHeader), fp_bmp);
 
-	rgb24_buffer = (unsigned char *) malloc(width * height * 3);
 
 	fwrite(pFrameRGB->data[0], width * height * 24 / 8, 1, fp_bmp);
 	fclose(fp_bmp);
-	free(rgb24_buffer);
 	return 0;
 
 }
-
 
 /***
  * avi/mp4/h264转换成Bitmap
@@ -434,6 +505,7 @@ int flush_encoder(AVFormatContext *fmt_ctx, unsigned int stream_index);
 /***
  * yuv转换成mp4
  */
+
 extern "C"
 JNIEXPORT jint JNICALL
 Java_com_yodosmart_ffmpegdemo_MainActivity_yuvToMp4(JNIEnv *env, jobject instance,
@@ -636,6 +708,189 @@ int flush_encoder(AVFormatContext *fmt_ctx, unsigned int stream_index) {
 	}
 	return ret;
 }
+
+/***
+ * yuv转换成bmp
+ */
+extern "C"
+JNIEXPORT jint JNICALL
+Java_com_yodosmart_ffmpegdemo_MainActivity_yuvToBitmap(JNIEnv *env, jobject instance,
+													   jstring input_jstr_, jstring output_jstr_,
+													   jint w_jstr, jint h_jstr) {
+	const char *input_jstr = env->GetStringUTFChars(input_jstr_, 0);
+	const char *output_jstr = env->GetStringUTFChars(output_jstr_, 0);
+
+	//Parameters
+	FILE *src_file = fopen(input_jstr, "rb");
+	const int src_w = w_jstr, src_h = h_jstr;
+	AVPixelFormat src_pixfmt = AV_PIX_FMT_YUV420P;
+
+	int src_bpp = av_get_bits_per_pixel(av_pix_fmt_desc_get(src_pixfmt));
+
+	FILE *dst_file = fopen(output_jstr, "wb");
+	const int dst_w = w_jstr, dst_h = h_jstr;
+	AVPixelFormat dst_pixfmt = AV_PIX_FMT_RGB24;
+	int dst_bpp = av_get_bits_per_pixel(av_pix_fmt_desc_get(dst_pixfmt));
+
+	//Structures
+	uint8_t *src_data[4];
+	int src_linesize[4];
+
+	uint8_t *dst_data[4];
+	int dst_linesize[4];
+
+	int rescale_method = SWS_BICUBIC;
+	struct SwsContext *img_convert_ctx;
+	uint8_t *temp_buffer = (uint8_t *) malloc(src_w * src_h * src_bpp / 8);
+
+	int frame_idx = 0;
+	int ret = 0;
+	ret = av_image_alloc(src_data, src_linesize, src_w, src_h, src_pixfmt, 1);
+	if (ret < 0) {
+		printf("Could not allocate source image\n");
+		return -1;
+	}
+	ret = av_image_alloc(dst_data, dst_linesize, dst_w, dst_h, dst_pixfmt, 1);
+	if (ret < 0) {
+		printf("Could not allocate destination image\n");
+		return -1;
+	}
+	//-----------------------------
+	//Init Method 1
+	img_convert_ctx = sws_alloc_context();
+	//Show AVOption
+//	av_opt_show2(img_convert_ctx, stdout, AV_OPT_FLAG_VIDEO_PARAM, 0);
+	//Set Value
+//	av_opt_set_int(img_convert_ctx, "sws_flags", SWS_BICUBIC | SWS_PRINT_INFO, 0);
+	av_opt_set_int(img_convert_ctx, "srcw", src_w, 0);
+	av_opt_set_int(img_convert_ctx, "srch", src_h, 0);
+	av_opt_set_int(img_convert_ctx, "src_format", src_pixfmt, 0);
+	//'0' for MPEG (Y:0-235);'1' for JPEG (Y:0-255)
+	av_opt_set_int(img_convert_ctx, "src_range", 1, 0);
+	av_opt_set_int(img_convert_ctx, "dstw", dst_w, 0);
+	av_opt_set_int(img_convert_ctx, "dsth", dst_h, 0);
+	av_opt_set_int(img_convert_ctx, "dst_format", dst_pixfmt, 0);
+	av_opt_set_int(img_convert_ctx, "dst_range", 1, 0);
+	sws_init_context(img_convert_ctx, NULL, NULL);
+
+	//Init Method 2
+	//img_convert_ctx = sws_getContext(src_w, src_h,src_pixfmt, dst_w, dst_h, dst_pixfmt,
+	//  rescale_method, NULL, NULL, NULL);
+	//-----------------------------
+	/*
+	//Colorspace
+	ret=sws_setColorspaceDetails(img_convert_ctx,sws_getCoefficients(SWS_CS_ITU601),0,
+		sws_getCoefficients(SWS_CS_ITU709),0,
+		 0, 1 << 16, 1 << 16);
+	if (ret==-1) {
+		printf( "Colorspace not support.\n");
+		return -1;
+	}
+	*/
+	while (1) {
+		if (fread(temp_buffer, 1, src_w * src_h * src_bpp / 8, src_file) !=
+			src_w * src_h * src_bpp / 8) {
+			break;
+		}
+
+		switch (src_pixfmt) {
+			case AV_PIX_FMT_GRAY8: {
+				memcpy(src_data[0], temp_buffer, src_w * src_h);
+				break;
+			}
+			case AV_PIX_FMT_YUV420P: {
+				memcpy(src_data[0], temp_buffer, src_w * src_h);                    //Y
+				memcpy(src_data[1], temp_buffer + src_w * src_h, src_w * src_h / 4);      //U
+				memcpy(src_data[2], temp_buffer + src_w * src_h * 5 / 4, src_w * src_h / 4);  //V
+				break;
+			}
+			case AV_PIX_FMT_YUV422P: {
+				memcpy(src_data[0], temp_buffer, src_w * src_h);                    //Y
+				memcpy(src_data[1], temp_buffer + src_w * src_h, src_w * src_h / 2);      //U
+				memcpy(src_data[2], temp_buffer + src_w * src_h * 3 / 2, src_w * src_h / 2);  //V
+				break;
+			}
+			case AV_PIX_FMT_YUV444P: {
+				memcpy(src_data[0], temp_buffer, src_w * src_h);                    //Y
+				memcpy(src_data[1], temp_buffer + src_w * src_h, src_w * src_h);        //U
+				memcpy(src_data[2], temp_buffer + src_w * src_h * 2, src_w * src_h);      //V
+				break;
+			}
+			case AV_PIX_FMT_YUYV422: {
+				memcpy(src_data[0], temp_buffer, src_w * src_h * 2);                  //Packed
+				break;
+			}
+			case AV_PIX_FMT_RGB24: {
+				memcpy(src_data[0], temp_buffer, src_w * src_h * 3);                  //Packed
+				break;
+			}
+			default: {
+				printf("Not Support Input Pixel Format.\n");
+				break;
+			}
+		}
+
+		sws_scale(img_convert_ctx, (const uint8_t *const *) src_data, src_linesize, 0, src_h,
+				  dst_data, dst_linesize);
+		printf("Finish process frame %5d\n", frame_idx);
+
+		switch (dst_pixfmt) {
+			case AV_PIX_FMT_GRAY8: {
+				fwrite(dst_data[0], 1, dst_w * dst_h, dst_file);
+				break;
+			}
+			case AV_PIX_FMT_YUV420P: {
+				fwrite(dst_data[0], 1, dst_w * dst_h, dst_file);                 //Y
+				fwrite(dst_data[1], 1, dst_w * dst_h / 4, dst_file);               //U
+				fwrite(dst_data[2], 1, dst_w * dst_h / 4, dst_file);               //V
+				break;
+			}
+			case AV_PIX_FMT_YUV422P: {
+				fwrite(dst_data[0], 1, dst_w * dst_h, dst_file);                 //Y
+				fwrite(dst_data[1], 1, dst_w * dst_h / 2, dst_file);               //U
+				fwrite(dst_data[2], 1, dst_w * dst_h / 2, dst_file);               //V
+				break;
+			}
+			case AV_PIX_FMT_YUV444P: {
+				fwrite(dst_data[0], 1, dst_w * dst_h, dst_file);                 //Y
+				fwrite(dst_data[1], 1, dst_w * dst_h, dst_file);                 //U
+				fwrite(dst_data[2], 1, dst_w * dst_h, dst_file);                 //V
+				break;
+			}
+			case AV_PIX_FMT_YUYV422: {
+				fwrite(dst_data[0], 1, dst_w * dst_h * 2, dst_file);               //Packed
+				break;
+			}
+			case AV_PIX_FMT_RGB24: {
+				fwrite(dst_data[0], 1, dst_w * dst_h * 3, dst_file);               //Packed
+				SaveAsBMP(dst_data[0], src_w, src_h, frame_idx);
+				break;
+			}
+			case AV_PIX_FMT_BGR24: {
+				fwrite(dst_data[0], 1, dst_w * dst_h * 3, dst_file);               //Packed
+				SaveAsBMP(dst_data[0], src_w, src_h, frame_idx);
+				break;
+			}
+			default: {
+				printf("Not Support Output Pixel Format.\n");
+				break;
+			}
+		}
+
+		frame_idx++;
+	}
+
+	sws_freeContext(img_convert_ctx);
+
+	free(temp_buffer);
+	fclose(dst_file);
+	av_freep(&src_data[0]);
+	av_freep(&dst_data[0]);
+
+
+	return 0;
+}
+
 
 extern "C"
 JNIEXPORT jint JNICALL

@@ -36,7 +36,7 @@
             android:id="@+id/bt1"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="解析图片"
+            android:text="解析"
             />
     </LinearLayout>
 
@@ -68,7 +68,7 @@
             android:id="@+id/bt2"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="解析图片"
+            android:text="解析"
             />
     </LinearLayout>
 
@@ -100,7 +100,7 @@
             android:id="@+id/bt3"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="解析图片"
+            android:text="解析"
             />
     </LinearLayout>
 
@@ -132,9 +132,11 @@
             android:id="@+id/bt4"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="解析图片"
+            android:text="解析"
             />
+
     </LinearLayout>
+
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -146,7 +148,7 @@
             android:id="@+id/tv_route_5"
             android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:layout_weight="1"
+            android:layout_weight="3"
             android:gravity="center_vertical"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintLeft_toLeftOf="parent"
@@ -162,9 +164,18 @@
 
         <Button
             android:id="@+id/bt5"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_weight="1"
             android:text="压缩"
+            />
+
+        <Button
+            android:id="@+id/bt6"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="解析"
             />
     </LinearLayout>
 

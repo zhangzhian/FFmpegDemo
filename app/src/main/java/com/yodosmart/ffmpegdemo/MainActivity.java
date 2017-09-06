@@ -67,6 +67,8 @@ public class MainActivity extends AppCompatActivity {
     Button btYuv;
     @BindView(R.id.bt5)
     Button bt5;
+    @BindView(R.id.bt6)
+    Button bt6;
 
     private List<String> dataImage = new ArrayList<>();
     private ImageAdapter adapterImage;
@@ -112,7 +114,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    @OnClick({R.id.bt_mp4, R.id.bt1, R.id.bt_avi, R.id.bt2, R.id.bt_h264, R.id.bt3, R.id.bt_camera, R.id.bt4, R.id.bt_yuv, R.id.bt5})
+    @OnClick({R.id.bt_mp4, R.id.bt1, R.id.bt_avi, R.id.bt2, R.id.bt_h264, R.id.bt3, R.id.bt_camera, R.id.bt4, R.id.bt_yuv, R.id.bt5, R.id.bt6})
     public void onViewClicked(View view) {
         switch (view.getId()) {
             case R.id.bt_mp4:
@@ -150,8 +152,13 @@ public class MainActivity extends AppCompatActivity {
                 if (!TextUtils.isEmpty(tvRoute5.getText().toString()))
                     compress(tvRoute5, 640, 360, 652);
                 break;
+            case R.id.bt6:
+                if (!TextUtils.isEmpty(tvRoute5.getText().toString()))
+                    conversionYUV(tvRoute5, 640, 360);
+                break;
         }
     }
+
 
     /**
      * 调用系统摄像机
@@ -211,6 +218,29 @@ public class MainActivity extends AppCompatActivity {
             }
         }).start();
     }
+
+    /**
+     * 把YUV格式的视频解析成BMP
+     */
+    private void conversionYUV(final TextView tvRoute, final int w_jstr, final int h_jstr) {
+        dialog.showDialog();
+        String[] videoInfo = tvRoute.getText().toString().split("/");
+        String fileName = videoInfo[videoInfo.length - 1];
+        final String[] fileNames = fileName.split("\\.");
+        new Thread(new Runnable() {
+            public void run() {
+
+                int result = yuvToBitmap(tvRoute.getText().toString(), "/storage/emulated/0/Download/avtest/" + fileNames[0] + ".rgb", w_jstr, h_jstr);
+                //成功
+                if (result >= 0) {
+                    handler.sendEmptyMessage(2);
+                } else {
+                    handler.sendEmptyMessage(1);
+                }
+            }
+        }).start();
+    }
+
 
     /**
      * 调用系统文件管理器
@@ -285,7 +315,7 @@ public class MainActivity extends AppCompatActivity {
      * @param input_jstr  输入的avi/mp4/h264路径
      * @param output_jstr 输出的rgb路径
      * @return 大于等于0解析正确，返回的是解析生成bmp的数量
-     * 小与0解析出现问题
+     * 小于0解析出现问题
      */
     public native int avToBitmap(String input_jstr, String output_jstr);
 
@@ -301,7 +331,8 @@ public class MainActivity extends AppCompatActivity {
      * @param num_jstr    帧数量
      * @return
      */
-
     public native int yuvToMp4(String input_jstr, String output_jstr, int w_jstr, int h_jstr, int num_jstr);
+
+    public native int yuvToBitmap(String input_jstr, String output_jstr, int w_jstr, int h_jstr);
 
 }
