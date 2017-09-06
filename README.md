@@ -10,3 +10,6 @@ http://blog.csdn.net/baidu_32237719/article/details/77855106
 
 #### 在Andorid中使用FFmpeg实现YUV编码为MP4                      
 http://blog.csdn.net/baidu_32237719/article/details/77855358
+
+#### 在Andorid中使用FFmpeg实现YUV解码为BMP                     
+http://blog.csdn.net/baidu_32237719/article/details/77870408

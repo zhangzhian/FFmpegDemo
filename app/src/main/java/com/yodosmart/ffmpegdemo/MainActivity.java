@@ -230,10 +230,10 @@ public class MainActivity extends AppCompatActivity {
         new Thread(new Runnable() {
             public void run() {
 
-                int result = yuvToBitmap(tvRoute.getText().toString(), "/storage/emulated/0/Download/avtest/" + fileNames[0] + ".rgb", w_jstr, h_jstr);
+                picNum = yuvToBitmap(tvRoute.getText().toString(), "/storage/emulated/0/Download/avtest/" + fileNames[0] + ".rgb", w_jstr, h_jstr);
                 //成功
-                if (result >= 0) {
-                    handler.sendEmptyMessage(2);
+                if (picNum >= 0) {
+                    handler.sendEmptyMessage(0);
                 } else {
                     handler.sendEmptyMessage(1);
                 }
@@ -288,8 +288,6 @@ public class MainActivity extends AppCompatActivity {
                     Toast.makeText(this, "请选择正确的文件", Toast.LENGTH_SHORT).show();
                 }
             }
-
-
         }
     }
 
@@ -333,6 +331,14 @@ public class MainActivity extends AppCompatActivity {
      */
     public native int yuvToMp4(String input_jstr, String output_jstr, int w_jstr, int h_jstr, int num_jstr);
 
+    /**
+     * yuv转换成bmp
+     * @param input_jstr 输入的路径
+     * @param output_jstr 输出路径
+     * @param w_jstr 宽
+     * @param h_jstr 高
+     * @return
+     */
     public native int yuvToBitmap(String input_jstr, String output_jstr, int w_jstr, int h_jstr);
 
 }

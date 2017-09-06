@@ -149,7 +149,14 @@ int simplest_rgb24_to_bmp(const char *rgb24path, int width, int height, const ch
 	return 0;
 }
 
-
+/**
+ * RGB数据->BMP
+ * @param rgb24_buffer
+ * @param width
+ * @param height
+ * @param index
+ * @return
+ */
 int SaveAsBMP(uint8_t *rgb24_buffer, int width, int height, int index) {
 	typedef struct {
 		long imageSize;
@@ -888,7 +895,7 @@ Java_com_yodosmart_ffmpegdemo_MainActivity_yuvToBitmap(JNIEnv *env, jobject inst
 	av_freep(&dst_data[0]);
 
 
-	return 0;
+	return frame_idx;
 }
 
 
