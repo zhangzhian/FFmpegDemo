@@ -150,7 +150,8 @@ public class MainActivity extends AppCompatActivity {
                 break;
             case R.id.bt5:
                 if (!TextUtils.isEmpty(tvRoute5.getText().toString()))
-                    compress(tvRoute5, 640, 360, 652);
+                    //compress("/storage/emulated/0/Movies/1510884218071-1510884278071.rgb", 640, 320, 1000);
+                compress(tvRoute5.getText().toString(), 640, 360, 652);
                 break;
             case R.id.bt6:
                 if (!TextUtils.isEmpty(tvRoute5.getText().toString()))
@@ -178,15 +179,15 @@ public class MainActivity extends AppCompatActivity {
     /**
      * 压缩按钮，开始转Mp4
      */
-    private void compress(final TextView tvRoute, final int w_jstr, final int h_jstr, final int num_jstr) {
+    private void compress(final String tvRoute, final int w_jstr, final int h_jstr, final int num_jstr) {
         dialog.showDialog();
-        String[] videoInfo = tvRoute.getText().toString().split("/");
+        String[] videoInfo = tvRoute.split("/");
         String fileName = videoInfo[videoInfo.length - 1];
         final String[] fileNames = fileName.split("\\.");
         new Thread(new Runnable() {
             public void run() {
 
-                int result = yuvToMp4(tvRoute.getText().toString(), "/storage/emulated/0/Download/avtest/" + fileNames[0] + ".mp4", w_jstr, h_jstr, num_jstr);
+                int result = yuvToMp4(tvRoute.toString(), "/storage/emulated/0/Download/avtest/" + fileNames[0] + ".h264", w_jstr, h_jstr, num_jstr);
                 //转码成功
                 if (result >= 0) {
                     handler.sendEmptyMessage(2);

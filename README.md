@@ -13,3 +13,7 @@ http://blog.csdn.net/baidu_32237719/article/details/77855358
 
 #### 在Andorid中使用FFmpeg实现YUV解码为BMP                     
 http://blog.csdn.net/baidu_32237719/article/details/77870408
+
+
+#### 在Mac上编译FFMpeg并添加x264支持
+https://blog.csdn.net/baidu_32237719/article/details/79560534

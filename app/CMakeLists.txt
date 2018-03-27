@@ -51,7 +51,12 @@ add_library( avformat-57
 set_target_properties( avformat-57
                        PROPERTIES IMPORTED_LOCATION
                        ../../../../libs/armeabi/libavformat-57.so )
-
+add_library( x264-155
+             SHARED
+             IMPORTED)
+set_target_properties( x264-155
+                       PROPERTIES IMPORTED_LOCATION
+                       ../../../../libs/armeabi/libx264-155.so )
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++11")
 
 add_library( native-lib
@@ -62,6 +67,6 @@ include_directories(libs/include)
 
 #target_include_directories(native-lib PRIVATE libs/include)
 
-target_link_libraries( native-lib swresample-2 avcodec-57 avfilter-6 swscale-4  avformat-57 android log avutil-55
+target_link_libraries( native-lib swresample-2 avcodec-57 avfilter-6 swscale-4  avformat-57 x264-155 android log avutil-55
                        ${log-lib} )
 

@@ -56,6 +56,20 @@ typedef struct tagBITMAPINFOHEADER {
 } BITMAPINFOHEADER;
 #endif
 
+void printf_time_log(){
+	time_t t;
+	t = time(NULL);
+	struct tm *lt;
+	int ii = time(&t);
+	LOGE("i = %d\n",ii);
+}
+void printf_time_log(int i){
+	time_t t;
+	t = time(NULL);
+	struct tm *lt;
+	int ii = time(&t);
+	LOGE("i%d = %d\n",i,ii);
+}
 //Output FFmpeg's av_log()
 void custom_log(void *ptr, int level, const char *fmt, va_list vl) {
 	FILE *fp = fopen("/storage/emulated/0/av_log.txt", "a+");
@@ -289,7 +303,7 @@ int SaveAsBMP(AVFrame *pFrameRGB, int width, int height, int index) {
 	fwrite(&m_BMPHeader, 1, sizeof(m_BMPHeader), fp_bmp);
 	fwrite(&m_BMPInfoHeader, 1, sizeof(m_BMPInfoHeader), fp_bmp);
 
-
+	printf_time_log(1);
 	fwrite(pFrameRGB->data[0], width * height * 24 / 8, 1, fp_bmp);
 	fclose(fp_bmp);
 	return 0;
@@ -303,7 +317,8 @@ int SaveAsBMP(AVFrame *pFrameRGB, int width, int height, int index) {
 extern "C"
 JNIEXPORT jint JNICALL
 Java_com_yodosmart_ffmpegdemo_MainActivity_avToBitmap(JNIEnv *env, jobject instance,
-													  jstring input_jstr, jstring output_jstr) {
+																						  jstring input_jstr, jstring output_jstr) {
+	printf_time_log();
 	//h264ToYue
 	AVFormatContext *pFormatCtx;
 	int i, videoindex;
@@ -333,7 +348,6 @@ Java_com_yodosmart_ffmpegdemo_MainActivity_avToBitmap(JNIEnv *env, jobject insta
 	av_register_all();
 	avformat_network_init();
 	pFormatCtx = avformat_alloc_context();
-
 	if (avformat_open_input(&pFormatCtx, input_str, NULL, NULL) != 0) {
 		LOGE("Couldn't open input stream.\n");
 		return -1;
@@ -399,7 +413,7 @@ Java_com_yodosmart_ffmpegdemo_MainActivity_avToBitmap(JNIEnv *env, jobject insta
 
 	frame_cnt = 0;
 	time_start = clock();
-
+	printf_time_log();
 	while (av_read_frame(pFormatCtx, packet) >= 0) {
 		if (packet->stream_index == videoindex) {
 			ret = avcodec_decode_video2(pCodecCtx, pFrame, &got_picture, packet);
@@ -412,11 +426,13 @@ Java_com_yodosmart_ffmpegdemo_MainActivity_avToBitmap(JNIEnv *env, jobject insta
 						  0, pCodecCtx->height,
 						  pFrameRGB->data, pFrameRGB->linesize);
 				y_size = pCodecCtx->width * pCodecCtx->height;
-
+				printf_time_log(0);
 				//RGB
 				//转换
-				fwrite(pFrameRGB->data[0], (pCodecCtx->width) * (pCodecCtx->height) * 3, 1, output);
-				SaveAsBMP(pFrameRGB, pCodecCtx->width, pCodecCtx->height, frame_cnt);
+//				fwrite(pFrameRGB->data[0], (pCodecCtx->width) * (pCodecCtx->height) * 3, 1, output);
+//				printf_time_log();
+//				SaveAsBMP(pFrameRGB, pCodecCtx->width, pCodecCtx->height, frame_cnt);
+//				printf_time_log();
 				//fwrite(pFrameRGB->data[0], 1, y_size, fp_yuv);    //Y
 				//fwrite(pFrameRGB->data[1], 1, y_size / 4, fp_yuv);  //U
 				//fwrite(pFrameRGB->data[2], 1, y_size / 4, fp_yuv);  //V
@@ -436,7 +452,7 @@ Java_com_yodosmart_ffmpegdemo_MainActivity_avToBitmap(JNIEnv *env, jobject insta
 						sprintf(pictype_str, "Other");
 						break;
 				}
-				LOGI("Frame Index: %5d. Type:%s", frame_cnt, pictype_str);
+				LOGI("Frame Index1: %5d. Type:%s", frame_cnt, pictype_str);
 				frame_cnt++;
 			}
 		}
@@ -462,10 +478,8 @@ Java_com_yodosmart_ffmpegdemo_MainActivity_avToBitmap(JNIEnv *env, jobject insta
 		int y_size = pCodecCtx->width * pCodecCtx->height;
 		//RGB
 		//转换
-		fwrite(pFrameRGB->data[0], (pCodecCtx->width) * (pCodecCtx->height) * 3, 1, output);
-
-
-		SaveAsBMP(pFrameRGB, pCodecCtx->width, pCodecCtx->height, frame_cnt);
+//		fwrite(pFrameRGB->data[0], (pCodecCtx->width) * (pCodecCtx->height) * 3, 1, output);
+//		SaveAsBMP(pFrameRGB, pCodecCtx->width, pCodecCtx->height, frame_cnt);
 		//		fwrite(pFrameRGB->data[0], 1, y_size, fp_yuv);    //Y
 		//		fwrite(pFrameRGB->data[1], 1, y_size / 4, fp_yuv);  //U
 		//		fwrite(pFrameRGB->data[2], 1, y_size / 4, fp_yuv);  //V
@@ -485,7 +499,7 @@ Java_com_yodosmart_ffmpegdemo_MainActivity_avToBitmap(JNIEnv *env, jobject insta
 				sprintf(pictype_str, "Other");
 				break;
 		}
-		LOGI("Frame Index: %5d. Type:%s", frame_cnt, pictype_str);
+		LOGI("Frame Index2: %5d. Type:%s", frame_cnt, pictype_str);
 		frame_cnt++;
 	}
 	time_finish = clock();
@@ -503,6 +517,7 @@ Java_com_yodosmart_ffmpegdemo_MainActivity_avToBitmap(JNIEnv *env, jobject insta
 	avcodec_close(pCodecCtx);
 	avformat_close_input(&pFormatCtx);
 	//simplest_rgb24_to_bmp("lena_256x256_rgb24.rgb", 256, 256, "output_lena.bmp");
+	printf_time_log();
 	return frame_cnt;
 }
 using namespace std;
@@ -546,8 +561,16 @@ Java_com_yodosmart_ffmpegdemo_MainActivity_yuvToMp4(JNIEnv *env, jobject instanc
 	av_register_all();
 	//Method1.
 	pFormatCtx = avformat_alloc_context();
+
+	AVCodec * codec = NULL;
+	while(codec = av_codec_next(codec))
+	{
+		LOGE("%s\n",codec->name);
+	}
+
 	//Guess Format
 	fmt = av_guess_format(NULL, out_file, NULL);
+	//fmt = av_guess_format("h264", NULL, NULL);
 	pFormatCtx->oformat = fmt;
 
 	//Method 2.
@@ -909,7 +932,6 @@ Java_com_yodosmart_ffmpegdemo_MainActivity_RGBToBitmap(JNIEnv *env, jobject inst
 }
 
 
-
 extern "C"
 JNIEXPORT jstring JNICALL
 Java_com_yodosmart_ffmpegdemo_MainActivity_stringFromJNI(
@@ -1008,4 +1030,4 @@ Java_com_yodosmart_ffmpegdemo_MainActivity_avfilterinfo(
 		f_temp = f_temp->next;
 	}
 	return env->NewStringUTF(info);
-}
+}                                                                                                                                                                                                           
