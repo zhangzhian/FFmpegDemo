@@ -69,7 +69,8 @@ public class MainActivity extends AppCompatActivity {
     Button bt5;
     @BindView(R.id.bt6)
     Button bt6;
-
+    @BindView(R.id.bt7)
+    Button bt7;
     private List<String> dataImage = new ArrayList<>();
     private ImageAdapter adapterImage;
     private int picNum;
@@ -114,7 +115,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    @OnClick({R.id.bt_mp4, R.id.bt1, R.id.bt_avi, R.id.bt2, R.id.bt_h264, R.id.bt3, R.id.bt_camera, R.id.bt4, R.id.bt_yuv, R.id.bt5, R.id.bt6})
+    @OnClick({R.id.bt_mp4, R.id.bt1, R.id.bt_avi, R.id.bt2, R.id.bt_h264, R.id.bt3, R.id.bt_camera, R.id.bt4, R.id.bt_yuv, R.id.bt5, R.id.bt6, R.id.bt7})
     public void onViewClicked(View view) {
         switch (view.getId()) {
             case R.id.bt_mp4:
@@ -156,6 +157,9 @@ public class MainActivity extends AppCompatActivity {
             case R.id.bt6:
                 if (!TextUtils.isEmpty(tvRoute5.getText().toString()))
                     conversionYUV(tvRoute5, 640, 360);
+                break;
+            case R.id.bt7:
+                h246ToMp4();
                 break;
         }
     }
@@ -342,4 +346,7 @@ public class MainActivity extends AppCompatActivity {
      */
     public native int yuvToBitmap(String input_jstr, String output_jstr, int w_jstr, int h_jstr);
 
+
+
+    public native int h246ToMp4();
 }

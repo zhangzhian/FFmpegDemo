@@ -67,6 +67,6 @@ include_directories(libs/include)
 
 #target_include_directories(native-lib PRIVATE libs/include)
 
-target_link_libraries( native-lib swresample-2 avcodec-57 avfilter-6 swscale-4  avformat-57 x264-155 android log avutil-55
+target_link_libraries( native-lib avutil-55 swresample-2 avcodec-57 avfilter-6 swscale-4  avformat-57 x264-155 android log
                        ${log-lib} )
 
