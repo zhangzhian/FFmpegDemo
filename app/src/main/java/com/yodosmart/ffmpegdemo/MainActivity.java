@@ -98,6 +98,7 @@ public class MainActivity extends AppCompatActivity {
         for (int i = 0; i < picNum; i++) {
             dataImage.add("/storage/emulated/0/Download/avtest/img/_" + i + ".bmp");
         }
+        
         adapterImage.notifyDataSetChanged();
         dialog.dismiss();
     }
